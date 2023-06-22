@@ -99,13 +99,13 @@ class nesCPU {
     uint8_t cycles = 0;
 
     enum flags {       // status register flags
-        C = (1 << 0),  // carry
-        Z = (1 << 1),  // zaro
+        C = (1 << 0),  // carry - Set if overflow in bit 7
+        Z = (1 << 1),  // zero - Set if overflow in bit 7
         I = (1 << 2),  // disable interrupts
         B = (1 << 4),  // break
         U = (1 << 5),  // unused
-        V = (1 << 6),  // overdlow
-        N = (1 << 7),  // negative
+        V = (1 << 6),  // overflow - Set if sign bit is incorrect
+        N = (1 << 7),  // negative - Set if bit 7 set
     };
 
     uint8_t a = 0x00;       // accumulator
