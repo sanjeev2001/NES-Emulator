@@ -27,13 +27,13 @@ class nesCPU {
     uint8_t IZY();  // indirect y indexed
 
     // opcodes
-    uint8_t ADC();
-    uint8_t AND();
-    uint8_t ASL();
-    uint8_t BCC();
-    uint8_t BCS();
-    uint8_t BEQ();
-    uint8_t BIT();
+    uint8_t ADC();  // add with carry
+    uint8_t AND();  // and
+    uint8_t ASL();  // arithmetic shift left
+    uint8_t BCC();  // branch if carry clear
+    uint8_t BCS();  // branch if carry set
+    uint8_t BEQ();  // branch if equal
+    uint8_t BIT();  // bit test
     uint8_t BMI();
     uint8_t BNE();
     uint8_t BPL();
@@ -102,6 +102,7 @@ class nesCPU {
         C = (1 << 0),  // carry - Set if overflow in bit 7
         Z = (1 << 1),  // zero - Set if overflow in bit 7
         I = (1 << 2),  // disable interrupts
+        D = (1 << 3),  // decimal mode
         B = (1 << 4),  // break
         U = (1 << 5),  // unused
         V = (1 << 6),  // overflow - Set if sign bit is incorrect

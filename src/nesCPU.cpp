@@ -299,6 +299,63 @@ void nesCPU::clock() {
     cycles--;
 }
 
+void nesCPU::reset() {
+    a = 0;
+    x = 0;
+    y = 0;
+    sp = 0xFD;
+    status = 0x00 | U;
+
+    addr_abs = 0xFFFC;
+    uint16_t lo = read(addr_abs);
+    uint16_t hi = read(addr_abs + 1);
+    fetched = 0;
+
+    cycles = 8;
+}
+
+void nesCPU::interruptRequest() {
+    if (getFlag(I) == 0) {
+        write(0x0100 + sp, (pc << 8) & 0x00FF);
+        sp--;
+        write(0x0100 + sp, pc & 0x00FF);
+        sp--;
+
+        setFlag(I, 1);
+        setFlag(B, 0);
+        setFlag(U, 1);
+        write(0x0100 + sp, status);
+        sp--;
+
+        addr_abs = 0xFFFE;
+        uint16_t lo = read(addr_abs);
+        uint16_t hi = read(addr_abs + 1);
+        pc = (hi << 8) | lo;
+
+        cycles = 7;
+    }
+}
+
+void nesCPU::nonMaskedInterruptRequest() {
+    write(0x0100 + sp, (pc << 8) & 0x00FF);
+    sp--;
+    write(0x0100 + sp, pc & 0x00FF);
+    sp--;
+
+    setFlag(I, 1);
+    setFlag(B, 0);
+    setFlag(U, 1);
+    write(0x0100 + sp, status);
+    sp--;
+
+    addr_abs = 0xFFFA;
+    uint16_t lo = read(addr_abs);
+    uint16_t hi = read(addr_abs + 1);
+    pc = (hi << 8) | lo;
+
+    cycles = 8;
+}
+
 uint8_t nesCPU::IMP() {
     fetched = a;
     return 0;
@@ -556,5 +613,170 @@ uint8_t nesCPU::BVS() {
 
         pc = addr_abs;
     }
+    return 0;
+}
+
+uint8_t nesCPU::ADC() {
+    fetch();
+    uint16_t temp = (uint16_t)a + (uint16_t)fetched + (uint16_t)getFlag(C);
+    setFlag(C, a > 255);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(V, (a ^ (temp & 0x00FF)) & (~(a ^ fetched)) & 0x0080);
+    setFlag(N, temp & 0x80);
+    a = temp & 0x00FF;
+    return 1;
+}
+
+uint8_t nesCPU::SBC() {
+    fetch();
+    uint16_t temp =
+        (uint16_t)a + ((uint16_t)fetched ^ 0x00FF) + (uint16_t)getFlag(C);
+    setFlag(C, a > 255);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(V, (a ^ (temp & 0x00FF)) & (~(a ^ fetched)) & 0x0080);
+    setFlag(N, temp & 0x80);
+    a = temp & 0x00FF;
+    return 1;
+}
+
+uint8_t nesCPU::ASL() {
+    fetch();
+
+    uint8_t bit7 = fetched & 0x80;
+    fetched <<= 1;
+    setFlag(C, bit7 > 0);
+    setFlag(Z, fetched == 0);
+    setFlag(N, fetched & 0x80);
+
+    if (lookup[opcode].addressingMode == &nesCPU::IMP)
+        a = fetched & 0x00FF;
+    else
+        write(addr_abs, fetched & 0x00FF);
+    return 0;
+}
+
+uint8_t nesCPU::BIT() {
+    fetch();
+    uint16_t temp = a & fetched;
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(V, fetched & (1 << 6));
+    setFlag(N, fetched & (1 << 7));
+    return 0;
+}
+
+uint8_t nesCPU::BRK() {
+    pc++;
+
+    setFlag(I, 1);
+    write(0x0100 + sp, (pc >> 8) & 0x00FF);
+    sp--;
+    write(0x0100 + sp, pc & 0x00FF);
+    sp--;
+
+    setFlag(B, 1);
+    write(0x0100 + sp, status);
+    sp--;
+    setFlag(B, 0);
+
+    pc = (uint16_t)read(0xFFFE) | ((uint16_t)read(0xFFFF) << 8);
+    return 0;
+}
+
+uint8_t nesCPU::CLC() {
+    setFlag(C, 0);
+    return 0;
+}
+
+uint8_t nesCPU::CLD() {
+    setFlag(D, 0);
+    return 0;
+}
+
+uint8_t nesCPU::CLI() {
+    setFlag(I, 0);
+    return 0;
+}
+
+uint8_t nesCPU::CLV() {
+    setFlag(V, 0);
+    return 0;
+}
+
+uint8_t nesCPU::CMP() {
+    fetch();
+    uint16_t temp = (uint16_t)a - (uint16_t)fetched;
+    setFlag(C, a >= fetched);
+    setFlag(Z, a == fetched);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t nesCPU::CPX() {
+    fetch();
+    uint16_t temp = (uint16_t)x - (uint16_t)fetched;
+    setFlag(C, x >= fetched);
+    setFlag(Z, x == fetched);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t nesCPU::CPY() {
+    fetch();
+    uint16_t temp = (uint16_t)y - (uint16_t)fetched;
+    setFlag(C, y >= fetched);
+    setFlag(Z, y == fetched);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t nesCPU::DEC() {
+    fetch();
+    uint16_t temp = fetched - 1;
+    write(addr_abs, temp & 0x00FF);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(Z, (temp & 0x0080));
+    return 0;
+}
+
+uint8_t nesCPU::DEX() {
+    x--;
+    setFlag(Z, x == 0);
+    setFlag(Z, x & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::DEY() {
+    y--;
+    setFlag(Z, y == 0);
+    setFlag(Z, y & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::EOR() {}
+
+uint8_t nesCPU::PHA() {
+    write(0x0100 + sp, a);
+    sp--;
+    return 0;
+}
+
+uint8_t nesCPU::PLA() {
+    sp++;
+    a = read(0x0100 + sp);
+    setFlag(Z, a == 0);
+    setFlag(N, a & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::RTI() {
+    sp++;
+    status = read(0x0100 + sp);
+    status &= ~B;
+    status &= ~U;
+
+    sp++;
+    pc = (uint16_t)read(0x0100 + sp);
+    sp++;
+    pc |= (uint16_t)read(0x0100 + sp) << 8;
     return 0;
 }
