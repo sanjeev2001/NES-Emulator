@@ -13,9 +13,6 @@ class nesCPU {
 
     void connectBus(Bus* n) { bus = n; }
 
-    std::map<uint16_t, std::string> disassemble(uint16_t nStart,
-                                                uint16_t nStop);
-
     // addressing modes
     uint8_t IMP();  // implied
     uint8_t IMM();  // immediate
