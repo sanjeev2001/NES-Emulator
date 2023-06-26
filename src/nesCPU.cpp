@@ -267,10 +267,10 @@ nesCPU::nesCPU() {  // ??? refers to unused/unofficial opcodes
 
 nesCPU::~nesCPU() {}
 
-uint8_t nesCPU::read(uint16_t address) { return bus->read(address, false); }
+uint8_t nesCPU::read(uint16_t address) { return bus->cpuRead(address, false); }
 
 void nesCPU::write(uint16_t address, uint8_t data) {
-    bus->write(address, data);
+    bus->cpuWrite(address, data);
 }
 
 uint8_t nesCPU::getFlag(flags f) { return ((status & f) > 0) ? 1 : 0; }

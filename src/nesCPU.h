@@ -35,17 +35,17 @@ class nesCPU {
     uint8_t BCS();  // branch if carry set
     uint8_t BEQ();  // branch if equal
     uint8_t BIT();  // bit test
-    uint8_t BMI();
-    uint8_t BNE();
-    uint8_t BPL();
-    uint8_t BRK();
-    uint8_t BVC();
-    uint8_t BVS();
-    uint8_t CLC();
-    uint8_t CLD();
-    uint8_t CLI();
-    uint8_t CLV();
-    uint8_t CMP();
+    uint8_t BMI();  // branch if minus
+    uint8_t BNE();  // branch if not equal
+    uint8_t BPL();  // branch if positive
+    uint8_t BRK();  // break
+    uint8_t BVC();  // branch if overflow clear
+    uint8_t BVS();  // branch if overflow set
+    uint8_t CLC();  // clear carry flag
+    uint8_t CLD();  // clear decimal flag
+    uint8_t CLI();  // clear interrupt flag
+    uint8_t CLV();  // clear overflow flag
+    uint8_t CMP();  // compare
     uint8_t CPX();
     uint8_t CPY();
     uint8_t DEC();
