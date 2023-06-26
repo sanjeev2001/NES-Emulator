@@ -752,7 +752,56 @@ uint8_t nesCPU::DEY() {
     return 0;
 }
 
-uint8_t nesCPU::EOR() {}
+uint8_t nesCPU::EOR() {
+    fetch();
+    a ^= fetched;
+    setFlag(Z, a == 0);
+    setFlag(N, a & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::INC() {
+    fetch();
+    uint16_t temp = fetched + 1;
+    write(addr_abs, temp & 0x00FF);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t nesCPU::INX() {
+    fetch();
+    uint16_t temp = x + 1;
+    write(addr_abs, temp & 0x00FF);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t nesCPU::INY() {
+    fetch();
+    uint16_t temp = y + 1;
+    write(addr_abs, temp & 0x00FF);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    return 0;
+}
+
+uint8_t nesCPU::JMP() {
+    pc = addr_abs;
+    return 0;
+}
+
+uint8_t nesCPU::JSR() {
+    pc--;
+    write(0x0100 + sp, (pc >> 8) & 0x00FF);
+    sp--;
+    write(0x0100 + sp, pc & 0x00FF);
+    sp--;
+
+    pc = addr_abs;
+    return 0;
+}
 
 uint8_t nesCPU::PHA() {
     write(0x0100 + sp, a);
