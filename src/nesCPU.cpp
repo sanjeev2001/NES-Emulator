@@ -309,6 +309,8 @@ void nesCPU::reset() {
     addr_abs = 0xFFFC;
     uint16_t lo = read(addr_abs);
     uint16_t hi = read(addr_abs + 1);
+    pc = (hi << 8) | lo;
+
     fetched = 0;
 
     cycles = 8;
@@ -563,7 +565,7 @@ uint8_t nesCPU::BMI() {
 uint8_t nesCPU::BNE() {
     if (getFlag(Z) == 0) {
         cycles++;
-        addr_abs = addr_abs + pc;
+        addr_abs = addr_rel + pc;
 
         if ((addr_abs & 0xFF00) != (pc & 0xFF00)) {
             cycles++;
@@ -748,7 +750,7 @@ uint8_t nesCPU::DEX() {
 uint8_t nesCPU::DEY() {
     y--;
     setFlag(Z, y == 0);
-    setFlag(Z, y & 0x80);
+    setFlag(N, y & 0x80);
     return 0;
 }
 
@@ -803,9 +805,77 @@ uint8_t nesCPU::JSR() {
     return 0;
 }
 
+uint8_t nesCPU::LDA() {
+    fetch();
+    a = fetched;
+    setFlag(Z, a == 0);
+    setFlag(N, a & 0x80);
+    return 1;
+}
+
+uint8_t nesCPU::LDX() {
+    fetch();
+    x = fetched;
+    setFlag(Z, x == 0);
+    setFlag(N, x & 0x80);
+    return 1;
+}
+
+uint8_t nesCPU::LDY() {
+    fetch();
+    y = fetched;
+    setFlag(Z, y == 0);
+    setFlag(N, y & 0x80);
+    return 1;
+}
+
+uint8_t nesCPU::LSR() {
+    fetch();
+    setFlag(C, fetched == 0);
+    uint16_t temp = fetched >> 1;
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    if (lookup[opcode].addressingMode == &nesCPU::IMP) {
+        a = temp & 0x00FF;
+    } else {
+        write(addr_abs, temp & 0x00FF);
+    }
+    return 0;
+}
+
+uint8_t nesCPU::NOP() {
+    switch (opcode) {
+        case 0x1C:
+        case 0x3C:
+        case 0x5C:
+        case 0x7C:
+        case 0xDC:
+        case 0xFC:
+            return 1;
+            break;
+    }
+    return 0;
+}
+
+uint8_t nesCPU::ORA() {
+    fetch();
+    a |= fetched;
+    setFlag(Z, a == 0);
+    setFlag(N, a & 0x80);
+    return 1;
+}
+
 uint8_t nesCPU::PHA() {
     write(0x0100 + sp, a);
     sp--;
+    return 0;
+}
+
+uint8_t nesCPU::PHP() {
+    write(0x0100 + sp, status | B | U);
+    sp--;
+    setFlag(B, 0);
+    setFlag(U, 0);
     return 0;
 }
 
@@ -814,6 +884,41 @@ uint8_t nesCPU::PLA() {
     a = read(0x0100 + sp);
     setFlag(Z, a == 0);
     setFlag(N, a & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::PLP() {
+    sp++;
+    status = read(0x0100 + sp);
+    setFlag(U, 1);
+    return 0;
+}
+
+uint8_t nesCPU::ROL() {
+    fetch();
+    setFlag(C, fetched & 0x80);
+    uint16_t temp = (uint16_t)(fetched << 1) | getFlag(C);
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    if (lookup[opcode].addressingMode == &nesCPU::IMP) {
+        a = temp & 0x00FF;
+    } else {
+        write(addr_abs, temp & 0x00FF);
+    }
+    return 0;
+}
+
+uint8_t nesCPU::ROR() {
+    fetch();
+    setFlag(C, fetched & 0x80);
+    uint16_t temp = (uint16_t)(getFlag(C) << 7) | fetched >> 1;
+    setFlag(Z, (temp & 0x00FF) == 0);
+    setFlag(N, temp & 0x0080);
+    if (lookup[opcode].addressingMode == &nesCPU::IMP) {
+        a = temp & 0x00FF;
+    } else {
+        write(addr_abs, temp & 0x00FF);
+    }
     return 0;
 }
 
@@ -828,4 +933,200 @@ uint8_t nesCPU::RTI() {
     sp++;
     pc |= (uint16_t)read(0x0100 + sp) << 8;
     return 0;
+}
+
+uint8_t nesCPU::RTS() {
+    sp++;
+    pc = (uint16_t)read(0x0100 + sp);
+    sp++;
+    pc |= (uint16_t)read(0x0100 + sp) << 8;
+    pc++;
+    return 0;
+}
+
+uint8_t nesCPU::SEC() {
+    setFlag(C, 1);
+    return 0;
+}
+
+uint8_t nesCPU::SED() {
+    setFlag(D, 1);
+    return 0;
+}
+
+uint8_t nesCPU::SEI() {
+    setFlag(I, 1);
+    return 0;
+}
+
+uint8_t nesCPU::STA() {
+    write(addr_abs, a);
+    return 0;
+}
+
+uint8_t nesCPU::STX() {
+    write(addr_abs, x);
+    return 0;
+}
+
+uint8_t nesCPU::STY() {
+    write(addr_abs, y);
+    return 0;
+}
+
+uint8_t nesCPU::TAX() {
+    x = a;
+    setFlag(Z, x == 0);
+    setFlag(N, x & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::TAY() {
+    y = a;
+    setFlag(Z, y == 0);
+    setFlag(N, y & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::TSX() {
+    x = sp;
+    setFlag(Z, x == 0);
+    setFlag(N, x & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::TXA() {
+    a = x;
+    setFlag(Z, a == 0);
+    setFlag(N, a & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::TXS() {
+    sp = x;
+    return 0;
+}
+
+uint8_t nesCPU::TYA() {
+    a = y;
+    setFlag(Z, a == 0);
+    setFlag(N, a & 0x80);
+    return 0;
+}
+
+uint8_t nesCPU::XXX() { return 0; }
+
+uint8_t nesCPU::complete() { return cycles == 0; }
+
+std::map<uint16_t, std::string> nesCPU::disassemble(uint16_t nStart,
+                                                    uint16_t nStop) {
+    uint32_t addr = nStart;
+    uint8_t value = 0x00, lo = 0x00, hi = 0x00;
+    std::map<uint16_t, std::string> mapLines;
+    uint16_t line_addr = 0;
+
+    // A convenient utility to convert variables into
+    // hex strings because "modern C++"'s method with
+    // streams is atrocious
+    auto hex = [](uint32_t n, uint8_t d) {
+        std::string s(d, '0');
+        for (int i = d - 1; i >= 0; i--, n >>= 4)
+            s[i] = "0123456789ABCDEF"[n & 0xF];
+        return s;
+    };
+
+    // Starting at the specified address we read an instruction
+    // byte, which in turn yields information from the lookup table
+    // as to how many additional bytes we need to read and what the
+    // addressing mode is. I need this info to assemble human readable
+    // syntax, which is different depending upon the addressing mode
+
+    // As the instruction is decoded, a std::string is assembled
+    // with the readable output
+    while (addr <= (uint32_t)nStop) {
+        line_addr = addr;
+
+        // Prefix line with instruction address
+        std::string sInst = "$" + hex(addr, 4) + ": ";
+
+        // Read instruction, and get its readable name
+        uint8_t opcode = bus->read(addr, true);
+        addr++;
+        sInst += lookup[opcode].name + " ";
+
+        // Get oprands from desired locations, and form the
+        // instruction based upon its addressing mode. These
+        // routines mimmick the actual fetch routine of the
+        // 6502 in order to get accurate data as part of the
+        // instruction
+        if (lookup[opcode].addressingMode == &nesCPU::IMP) {
+            sInst += " {IMP}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::IMM) {
+            value = bus->read(addr, true);
+            addr++;
+            sInst += "#$" + hex(value, 2) + " {IMM}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::ZP0) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = 0x00;
+            sInst += "$" + hex(lo, 2) + " {ZP0}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::ZPX) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = 0x00;
+            sInst += "$" + hex(lo, 2) + ", X {ZPX}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::ZPY) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = 0x00;
+            sInst += "$" + hex(lo, 2) + ", Y {ZPY}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::IZX) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = 0x00;
+            sInst += "($" + hex(lo, 2) + ", X) {IZX}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::IZY) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = 0x00;
+            sInst += "($" + hex(lo, 2) + "), Y {IZY}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::ABS) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = bus->read(addr, true);
+            addr++;
+            sInst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + " {ABS}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::ABX) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = bus->read(addr, true);
+            addr++;
+            sInst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ", X {ABX}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::ABY) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = bus->read(addr, true);
+            addr++;
+            sInst += "$" + hex((uint16_t)(hi << 8) | lo, 4) + ", Y {ABY}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::IND) {
+            lo = bus->read(addr, true);
+            addr++;
+            hi = bus->read(addr, true);
+            addr++;
+            sInst += "($" + hex((uint16_t)(hi << 8) | lo, 4) + ") {IND}";
+        } else if (lookup[opcode].addressingMode == &nesCPU::REL) {
+            value = bus->read(addr, true);
+            addr++;
+            sInst +=
+                "$" + hex(value, 2) + " [$" + hex(addr + value, 4) + "] {REL}";
+        }
+
+        // Add the formed string to a std::map, using the instruction's
+        // address as the key. This makes it convenient to look for later
+        // as the instructions are variable in length, so a straight up
+        // incremental index is not sufficient.
+        mapLines[line_addr] = sInst;
+    }
+
+    return mapLines;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -11,6 +12,9 @@ class nesCPU {
     ~nesCPU();
 
     void connectBus(Bus* n) { bus = n; }
+
+    std::map<uint16_t, std::string> disassemble(uint16_t nStart,
+                                                uint16_t nStop);
 
     // addressing modes
     uint8_t IMP();  // implied
@@ -89,6 +93,8 @@ class nesCPU {
     void reset();
     void interruptRequest();  // interrupt can be disabled with interrupt flag
     void nonMaskedInterruptRequest();  // interrupt cannot be disabled
+
+    uint8_t complete();
 
     uint8_t fetch();
     uint8_t fetched = 0x00;

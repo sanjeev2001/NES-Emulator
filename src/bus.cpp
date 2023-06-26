@@ -1,7 +1,5 @@
 #include "bus.h"
 
-#include "nesCPU.h"
-
 Bus::Bus() {
     for (auto &i : ram) {
         i = 0x00;
