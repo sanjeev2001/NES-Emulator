@@ -1,20 +1,33 @@
 #pragma once
 
 #include <cstdint>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "Mapper0.h"
 
 class Cartridge {
    private:
-    /* data */
+    bool bImageValid = false;
+    std::vector<uint8_t> prgMemory;
+    std::vector<uint8_t> chrMemory;
+
+    uint8_t mapperID = 0;
+    uint8_t prgBanks = 0;
+    uint8_t chrBanks = 0;
+
+    std::shared_ptr<Mapper> pMapper;
+
    public:
-    Cartridge(/* args */);
+    Cartridge(const std::string &fileName);
     ~Cartridge();
 
-    uint8_t cpuRead(uint16_t addr, bool readOnly = false);
-    uint8_t cpuWrite(uint16_t addr, uint8_t data);
-    uint8_t ppuRead(uint16_t addr, bool readOnly = false);
-    uint8_t ppuWrite(uint16_t addr, uint8_t data);
+    bool ImageValid();
+
+    bool cpuRead(uint16_t addr, uint8_t &data);
+    bool cpuWrite(uint16_t addr, uint8_t data);
+    bool ppuRead(uint16_t addr, uint8_t &data);
+    bool ppuWrite(uint16_t addr, uint8_t data);
 };
-
-Cartridge::Cartridge(/* args */) {}
-
-Cartridge::~Cartridge() {}

@@ -1,56 +1,91 @@
 #include "cartridge.h"
 
-Cartridge::Cartridge(/* args */) {}
+Cartridge::Cartridge(const std::string &fileName) {
+    struct header {
+        char name[4];
+        uint8_t prgChunks;
+        uint8_t chrChunks;
+        uint8_t mapper1;
+        uint8_t mapper2;
+        uint8_t prgRamSize;
+        uint8_t system1;
+        uint8_t system2;
+        char unused[5];
+    } header;
+
+    std::ifstream ifs;
+    ifs.open(fileName, std::ifstream::binary);
+
+    if (ifs.is_open()) {
+        ifs.read((char *)&header, sizeof(header));
+
+        if (header.mapper1 & 0x04) {
+            ifs.seekg(512, std::ios_base::cur);
+        }
+
+        mapperID = ((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4);
+
+        uint8_t fileType = 1;
+
+        if (fileType == 0) {
+        } else if (fileType == 1) {
+            prgBanks = header.prgChunks;
+            prgMemory.resize(prgBanks * 16384);
+            ifs.read((char *)prgMemory.data(), prgMemory.size());
+
+            chrBanks = header.chrChunks;
+            chrMemory.resize(chrBanks * 8192);
+            ifs.read((char *)chrMemory.data(), chrMemory.size());
+
+        } else if (fileType == 2) {
+        }
+
+        switch (mapperID) {
+            case 0:
+                pMapper = std::make_shared<Mapper0>(prgBanks, chrBanks);
+                break;
+        }
+
+        ifs.close();
+    }
+}
 Cartridge::~Cartridge() {}
 
-uint8_t Cartridge::cpuRead(uint16_t addr, bool readOnly = false) {
-    uint8_t data = 0x00;
+bool Cartridge::ImageValid() { return bImageValid; }
 
-    switch (addr) {
-        case 0x0000:  // PPUCTRL
-            break;
-        case 0x0001:  // PPUMASK
-            break;
-        case 0x0002:  // PPUSTATUS
-            break;
-        case 0x0003:  // OAMADDR
-            break;
-        case 0x0004:  // OAMDATA
-            break;
-        case 0x0005:  // PPUSCROLL
-            break;
-        case 0x0006:  // PPUADDR
-            break;
-        case 0x0007:  // PPUDATA
-            break;
+bool Cartridge::cpuRead(uint16_t addr, uint8_t &data) {
+    uint32_t mapped_addr = 0;
+    if (pMapper->cpuMapRead(addr, mapped_addr)) {
+        data = prgMemory[mapped_addr];
+        return true;
+    } else {
+        return false;
     }
-    return data;
 }
-uint8_t Cartridge::cpuWrite(uint16_t addr, uint8_t data) {
-    switch (addr) {
-        case 0x0000:  // PPUCTRL
-            break;
-        case 0x0001:  // PPUMASK
-            break;
-        case 0x0002:  // PPUSTATUS
-            break;
-        case 0x0003:  // OAMADDR
-            break;
-        case 0x0004:  // OAMDATA
-            break;
-        case 0x0005:  // PPUSCROLL
-            break;
-        case 0x0006:  // PPUADDR
-            break;
-        case 0x0007:  // PPUDATA
-            break;
+bool Cartridge::cpuWrite(uint16_t addr, uint8_t data) {
+    uint32_t mapped_addr = 0;
+    if (pMapper->cpuMapWrite(addr, mapped_addr)) {
+        prgMemory[mapped_addr] = data;
+        return true;
+    } else {
+        return false;
     }
-    return data;
 }
-uint8_t Cartridge::ppuRead(uint16_t addr, bool readOnly = false) {
-    uint8_t data = 0x00;
-    addr &= 0x3FFF;
-
-    return data;
+bool Cartridge::ppuRead(uint16_t addr, uint8_t &data) {
+    uint32_t mapped_addr = 0;
+    if (pMapper->ppuMapRead(addr, mapped_addr)) {
+        data = chrMemory[mapped_addr];
+        return true;
+    } else {
+        return false;
+    }
 }
-uint8_t Cartridge::ppuWrite(uint16_t addr, uint8_t data) { addr &= 0x3FFF; }
+bool Cartridge::ppuWrite(uint16_t addr, uint8_t data) {
+    uint32_t mapped_addr = 0;
+    if (pMapper->ppuMapWrite(addr, mapped_addr)) {
+        chrMemory[mapped_addr] = data;
+        return true;
+    } else {
+        return false;
+    }
+}
