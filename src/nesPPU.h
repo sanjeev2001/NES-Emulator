@@ -7,11 +7,11 @@
 #include "olcPixelGameEngine.h"
 
 class nesPPU {
-private:
+   private:
     std::shared_ptr<Cartridge> cartridge;
-    uint8_t     tblName[2][1024] = {};
-    uint8_t     tblPattern[2][4096] = {};
-    uint8_t		tblPalette[32] = {};
+    uint8_t tblName[2][1024] = {};
+    uint8_t tblPattern[2][4096] = {};
+    uint8_t tblPalette[32] = {};
 
     olc::Pixel palScreen[0x40];
     // olc::Sprite sprScreen = olc::Sprite(256, 240);
@@ -26,7 +26,7 @@ private:
     int16_t scanline = 0;
     int16_t cycle = 0;
 
-public:
+   public:
     nesPPU();
     ~nesPPU();
 

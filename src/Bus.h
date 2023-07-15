@@ -8,7 +8,7 @@
 #include "nesPPU.h"
 
 class Bus {
-public:
+   public:
     Bus();
     ~Bus();
 
@@ -25,6 +25,6 @@ public:
 
     std::array<uint8_t, 2048> cpuRAM;
 
-private:
+   private:
     uint32_t clockCounter = 0;
 };
