@@ -7,12 +7,12 @@
 class Bus;
 
 class nesCPU {
-   public:
+public:
     nesCPU();
     ~nesCPU();
 
     std::map<uint16_t, std::string> disassemble(uint16_t nStart,
-                                                uint16_t nStop);
+        uint16_t nStop);
 
     void connectBus(Bus* n) { bus = n; }
 
@@ -93,8 +93,6 @@ class nesCPU {
     void reset();
     void interruptRequest();  // interrupt can be disabled with interrupt flag
     void nonMaskedInterruptRequest();  // interrupt cannot be disabled
-    bool intRequested();
-    bool nmiRequested();
 
     bool complete();
 
@@ -124,22 +122,18 @@ class nesCPU {
     uint16_t pc = 0x0000;   // program counter
     uint8_t status = 0x00;  // status register
 
-   private:
+private:
     Bus* bus = nullptr;
     void write(uint16_t address, uint8_t data);
     uint8_t read(uint16_t address);
 
     uint8_t getFlag(flags f);
     void setFlag(flags f, bool v);
-    void clearFlag(flags f);
-    void setZeroAndNeg(uint8_t val);
-
-    void relBranchPenalty(uint16_t start, uint16_t end);
 
     struct INSTRUCTION {
         std::string name;                            // instruction name;
-        uint8_t (nesCPU::*operate)(void) = nullptr;  // opcode function
-        uint8_t (nesCPU::*addressingMode)(void) =
+        uint8_t(nesCPU::* operate)(void) = nullptr;  // opcode function
+        uint8_t(nesCPU::* addressingMode)(void) =
             nullptr;         // opcode address mode
         uint8_t cycles = 0;  // cycle count
     };

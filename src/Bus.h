@@ -8,7 +8,7 @@
 #include "nesPPU.h"
 
 class Bus {
-   public:
+public:
     Bus();
     ~Bus();
 
@@ -24,7 +24,9 @@ class Bus {
     std::shared_ptr<Cartridge> cartridge;
 
     std::array<uint8_t, 2048> cpuRAM;
+    uint8_t controller[2];
 
-   private:
+private:
     uint32_t clockCounter = 0;
+    uint8_t controller_state[2];
 };
