@@ -15,6 +15,14 @@ void Bus::cpuWrite(uint16_t address, uint8_t data) {
 	else if (address >= 0x2000 && address <= 0x3FFF) {
 		ppu.cpuWrite(address & 0x0007, data);
 	}
+	else if (address == 0x4014) {
+		dmaPage = data;
+		dmaAddress = 0x00;
+		dmaTransfer = true;
+	}
+	else if (address >= 0x4016 && address <= 0x4017) {
+		controller_state[address & 0x0001] = controller[address & 0x0001];
+	}
 }
 
 uint8_t Bus::cpuRead(uint16_t address, bool bReadOnly) {
@@ -27,6 +35,9 @@ uint8_t Bus::cpuRead(uint16_t address, bool bReadOnly) {
 	}
 	else if (address >= 0x2000 && address <= 0x3FFF) {
 		data = ppu.cpuRead(address & 0x0007, bReadOnly);
+		
+	} else if (address >= 0x4016 && address <= 0x4017) {
+		data = (controller_state[address & 0x0001] & 0x80) > 0;
 		controller_state[address & 0x0001] <<= 1;
 	}
 
@@ -46,7 +57,31 @@ void Bus::reset() {
 void Bus::clock() {
 	ppu.clock();
 	if (clockCounter % 3 == 0) {
-		cpu.clock();
+		if (dmaTransfer) {
+			if (dmaDummy) {
+				if (clockCounter % 2 == 1) {
+					dmaDummy = false;
+				}
+			}
+			else {
+				if (clockCounter % 2 == 0) {
+					dmaData = cpuRead(dmaPage << 8 | dmaAddress);
+				}
+				else {
+					ppu.pOAM[dmaAddress] = dmaData;
+					dmaAddress++;
+
+					if (dmaAddress == 0x00) {
+						dmaTransfer = false;
+						dmaDummy = true;
+					}
+				}
+			}
+		}
+		else {
+			cpu.clock();
+		}
+		
 	}
 
 	if (ppu.nmi) {

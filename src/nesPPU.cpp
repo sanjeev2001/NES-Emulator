@@ -100,6 +100,7 @@ uint8_t nesPPU::cpuRead(uint16_t addr, bool readOnly) {
 	case 0x0003:  // OAMADDR
 		break;
 	case 0x0004:  // OAMDATA
+		data = pOAM[oamAddress];
 		break;
 	case 0x0005:  // PPUSCROLL
 		break;
@@ -130,8 +131,10 @@ void nesPPU::cpuWrite(uint16_t addr, uint8_t data) {
 		
 		break;
 	case 0x0003:  // OAMADDR
+		oamAddress = data;
 		break;
 	case 0x0004:  // OAMDATA
+		pOAM[oamAddress] = data;
 		break;
 	case 0x0005:  // PPUSCROLL
 		if (addressLatch == 0) {
@@ -267,107 +270,51 @@ void nesPPU::connectCartridge(const std::shared_ptr<Cartridge>& cart) {
 
 void nesPPU::clock() {
 
-	auto IncrementScrollX = [&]()
-	{
-		// Note: pixel perfect scrolling horizontally is handled by the 
-		// data shifters. Here we are operating in the spatial domain of 
-		// tiles, 8x8 pixel blocks.
-
-		// Ony if rendering is enabled
-		if (mask.render_background || mask.render_sprites)
-		{
-			// A single name table is 32x30 tiles. As we increment horizontally
-			// we may cross into a neighbouring nametable, or wrap around to
-			// a neighbouring nametable
-			if (vram_addr.coarse_x == 31)
-			{
-				// Leaving nametable so wrap address round
+	auto IncrementScrollX = [&]() {
+		if (mask.render_background || mask.render_sprites) {
+			if (vram_addr.coarse_x == 31) {
 				vram_addr.coarse_x = 0;
-				// Flip target nametable bit
 				vram_addr.nametable_x = ~vram_addr.nametable_x;
 			}
-			else
-			{
-				// Staying in current nametable, so just increment
+			else {
 				vram_addr.coarse_x++;
 			}
 		}
 	};
 
-	auto IncrementScrollY = [&]()
-	{
-		// Incrementing vertically is more complicated. The visible nametable
-		// is 32x30 tiles, but in memory there is enough room for 32x32 tiles.
-		// The bottom two rows of tiles are in fact not tiles at all, they
-		// contain the "attribute" information for the entire table. This is
-		// information that describes which palettes are used for different 
-		// regions of the nametable.
-
-		// In addition, the NES doesnt scroll vertically in chunks of 8 pixels
-		// i.e. the height of a tile, it can perform fine scrolling by using
-		// the fine_y component of the register. This means an increment in Y
-		// first adjusts the fine offset, but may need to adjust the whole
-		// row offset, since fine_y is a value 0 to 7, and a row is 8 pixels high
-
-		// Ony if rendering is enabled
-		if (mask.render_background || mask.render_sprites)
-		{
-			// If possible, just increment the fine y offset
-			if (vram_addr.fine_y < 7)
-			{
+	auto IncrementScrollY = [&]() {
+		if (mask.render_background || mask.render_sprites) {
+			
+			if (vram_addr.fine_y < 7) {
 				vram_addr.fine_y++;
 			}
-			else
-			{
-				// If we have gone beyond the height of a row, we need to
-				// increment the row, potentially wrapping into neighbouring
-				// vertical nametables. Dont forget however, the bottom two rows
-				// do not contain tile information. The coarse y offset is used
-				// to identify which row of the nametable we want, and the fine
-				// y offset is the specific "scanline"
-
-				// Reset fine y offset
+			else {
 				vram_addr.fine_y = 0;
 
-				// Check if we need to swap vertical nametable targets
-				if (vram_addr.coarse_y == 29)
-				{
-					// We do, so reset coarse y offset
+				
+				if (vram_addr.coarse_y == 29) {
 					vram_addr.coarse_y = 0;
-					// And flip the target nametable bit
 					vram_addr.nametable_y = ~vram_addr.nametable_y;
 				}
-				else if (vram_addr.coarse_y == 31)
-				{
-					// In case the pointer is in the attribute memory, we
-					// just wrap around the current nametable
+				else if (vram_addr.coarse_y == 31) {
 					vram_addr.coarse_y = 0;
 				}
-				else
-				{
-					// None of the above boundary/wrapping conditions apply
-					// so just increment the coarse y offset
+				else {
 					vram_addr.coarse_y++;
 				}
 			}
 		}
 	};
 
-	auto TransferAddressX = [&]()
-	{
-		// Ony if rendering is enabled
-		if (mask.render_background || mask.render_sprites)
-		{
+	auto TransferAddressX = [&]() {
+		if (mask.render_background || mask.render_sprites) {
 			vram_addr.nametable_x = tram_addr.nametable_x;
 			vram_addr.coarse_x = tram_addr.coarse_x;
 		}
 	};
 
-	auto TransferAddressY = [&]()
-	{
-		// Ony if rendering is enabled
-		if (mask.render_background || mask.render_sprites)
-		{
+	auto TransferAddressY = [&]() {
+		if (mask.render_background || mask.render_sprites) {
 			vram_addr.fine_y = tram_addr.fine_y;
 			vram_addr.nametable_y = tram_addr.nametable_y;
 			vram_addr.coarse_y = tram_addr.coarse_y;
@@ -389,11 +336,40 @@ void nesPPU::clock() {
 			bg_shifter_attrib_lo <<= 1;
 			bg_shifter_attrib_hi <<= 1;
 		}
+
+		if (mask.render_sprites && cycle >= 1 && cycle < 258)
+		{
+			for (int i = 0; i < spriteCount; i++)
+			{
+				if (spriteScanline[i].x > 0)
+				{
+					spriteScanline[i].x--;
+				}
+				else
+				{
+					sprite_shifter_pattern_lo[i] <<= 1;
+					sprite_shifter_pattern_hi[i] <<= 1;
+				}
+			}
+		}
 	};
 
 	if (scanline >= -1 && scanline <= 240) {
+		if (scanline == 0 && cycle == 0) {
+			cycle = 1;
+		}
+
 		if (scanline == -1 && cycle == 1) {
 			status.vertical_blank = 0;
+			status.sprite_zero_hit = 0;
+			status.sprite_overflow = 0;
+			status.sprite_zero_hit = 0;
+
+			
+			for (int i = 0; i < 8; i++) {
+				sprite_shifter_pattern_lo[i] = 0;
+				sprite_shifter_pattern_hi[i] = 0;
+			}
 		}
 
 		if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338)) {
@@ -432,8 +408,96 @@ void nesPPU::clock() {
 			TransferAddressX();
 		}
 
+		if (cycle == 338 || cycle == 340) {
+			bg_next_tile_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
+		}
+
 		if (scanline == -1 && cycle >= 280 && cycle < 305) {
 			TransferAddressY();
+		}
+
+		
+
+		if (cycle == 257 && scanline >= 0) {
+			std::memset(spriteScanline, 0xFF, 8 * sizeof(attributeEntry));
+			spriteCount = 0;
+
+			for (uint8_t i = 0; i < 8; i++)
+			{
+				sprite_shifter_pattern_lo[i] = 0;
+				sprite_shifter_pattern_hi[i] = 0;
+			}
+
+			uint8_t oamEntry = 0;
+			spriteZeroHit = false;
+			while (oamEntry < 64 && spriteCount < 9) {
+				int16_t diff = ((int16_t)scanline - (int16_t)OAM[oamEntry].y);
+				if (diff >= 0 && diff < (control.sprite_size ? 16 : 8)) {
+					if (spriteCount < 8) {
+						if (oamEntry == 0) {
+							spriteZeroHit = true;
+						}
+						memcpy(&spriteScanline[spriteCount], &OAM[oamEntry], sizeof(attributeEntry));
+						spriteCount++;
+					}
+				}
+				oamEntry++;
+			}
+			status.sprite_overflow = (spriteCount > 8);
+		}
+
+		if (cycle == 340) {
+			for (uint8_t i = 0; i < spriteCount; i++) {
+				uint8_t sprite_pattern_bits_lo;
+				uint8_t sprite_pattern_bits_hi;
+				uint16_t sprite_pattern_addr_lo;
+				uint16_t sprite_pattern_addr_hi;
+
+				if (!control.sprite_size) { //8x8
+					if (!(spriteScanline[i].attribute & 0x80)) {
+						sprite_pattern_addr_lo = (control.pattern_sprite << 12) | (spriteScanline[i].id << 4) | (scanline - spriteScanline[i].y);
+					}
+					else {
+						sprite_pattern_addr_lo = (control.pattern_sprite << 12) | (spriteScanline[i].id << 4) | (7 - (scanline - spriteScanline[i].y));
+					}
+				}
+				else {						//8x16
+					if (!(spriteScanline[i].attribute & 0x80)) {
+						if (scanline - spriteScanline[i].y < 8) {
+							sprite_pattern_addr_lo = ((spriteScanline[i].id & 0x01) << 12) | ((spriteScanline[i].id & 0xFE) << 4) | ((scanline - spriteScanline[i].y) & 0x07);
+						}
+						else {
+							sprite_pattern_addr_lo = ((spriteScanline[i].id & 0x01) << 12) | (((spriteScanline[i].id & 0xFE) + 1) << 4) | ((scanline - spriteScanline[i].y) & 0x07);
+						}
+					}
+					else {
+						if (scanline - spriteScanline[i].y < 8) {
+							sprite_pattern_addr_lo = ((spriteScanline[i].id & 0x01) << 12) | (((spriteScanline[i].id & 0xFE) + 1) << 4) | (7 - (scanline - spriteScanline[i].y) & 0x07);
+						}
+						else {
+							sprite_pattern_addr_lo = ((spriteScanline[i].id & 0x01) << 12) | ((spriteScanline[i].id & 0xFE) << 4) | (7 - (scanline - spriteScanline[i].y) & 0x07);
+						}
+					}
+				}
+
+				sprite_pattern_addr_hi = sprite_pattern_addr_lo + 8;
+				sprite_pattern_bits_lo = ppuRead(sprite_pattern_addr_lo);
+				sprite_pattern_bits_hi = ppuRead(sprite_pattern_addr_hi);
+
+				if (spriteScanline[i].attribute & 0x40) {
+					auto flipbyte = [](uint8_t b) {
+						b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+						b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+						b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+						return b;
+					};
+
+					sprite_pattern_bits_lo = flipbyte(sprite_pattern_bits_lo);
+					sprite_pattern_bits_hi = flipbyte(sprite_pattern_bits_hi);
+				}
+				sprite_shifter_pattern_lo[i] = sprite_pattern_bits_lo;
+				sprite_shifter_pattern_hi[i] = sprite_pattern_bits_hi;
+			}
 		}
 	}
 	
@@ -463,7 +527,73 @@ void nesPPU::clock() {
 		bgPalette = (bg_pal1 << 1) | bg_pal0;
 	}
 
-	sprScreen->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(bgPalette, bgPixel));
+	uint8_t fgPixel = 0x00;
+	uint8_t fgPalette = 0x00;
+	uint8_t fgPriority = 0x00;
+
+	if (mask.render_sprites) {
+		spriteZeroRendered = false;
+		for (uint8_t i = 0; i < spriteCount; i++) {
+			if (spriteScanline[i].x == 0) {
+				uint8_t fg_pixel_lo = (sprite_shifter_pattern_lo[i] & 0x80) > 0;
+				uint8_t fg_pixel_hi = (sprite_shifter_pattern_hi[i] & 0x80) > 0;
+				fgPixel = (fg_pixel_hi << 1) | fg_pixel_lo;
+
+				fgPalette = (spriteScanline[i].attribute & 0x03) + 0x04;
+				fgPriority = (spriteScanline[i].attribute & 0x20) == 0;
+				
+				if (fgPixel != 0) {
+					if (i == 0) {
+						spriteZeroRendered = true;
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	uint8_t pixel = 0x00;
+	uint8_t palette = 0x00;
+
+	if (bgPixel == 0 && fgPixel == 0) {
+		pixel = 0x00;
+		palette = 0x00;
+	}
+	else if (bgPixel == 0 && fgPixel > 0) {
+		pixel = fgPixel;
+		palette = fgPalette;
+	}
+	else if (bgPixel > 0 && fgPixel == 0) {
+		pixel = bgPixel;
+		palette = bgPalette;
+	}
+	else if (bgPixel > 0 && fgPixel > 0) {
+		if (fgPriority) {
+			pixel = fgPixel;
+			palette = fgPalette;
+		}
+		else {
+			pixel = bgPixel;
+			palette = bgPalette;
+		}
+
+		if (spriteZeroHit && spriteZeroRendered) {
+			if (mask.render_background & mask.render_sprites) {
+				if (~(mask.render_background_left | mask.render_sprites_left)) {
+					if (cycle >= 9 && cycle < 258) {
+						status.sprite_zero_hit = 1;
+					}
+				}
+				else {
+					if (cycle >= 1 && cycle < 258) {
+						status.sprite_zero_hit = 1;
+					}
+				}
+			}
+		}
+	}
+
+	sprScreen->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(palette, pixel));
 
 	cycle++;
 	if (cycle >= 341) {
@@ -474,6 +604,27 @@ void nesPPU::clock() {
 			frame_complete = true;
 		}
 	}
+}
+
+void nesPPU::reset() {
+	fine_x = 0x00;
+	addressLatch = 0x00;
+	ppuDataBuffer = 0x00;
+	scanline = 0;
+	cycle = 0;
+	bg_next_tile_id = 0x00;
+	bg_next_tile_attrib = 0x00;
+	bg_next_tile_lsb = 0x00;
+	bg_next_tile_msb = 0x00;
+	bg_shifter_pattern_lo = 0x0000;
+	bg_shifter_pattern_hi = 0x0000;
+	bg_shifter_attrib_lo = 0x0000;
+	bg_shifter_attrib_hi = 0x0000;
+	status.reg = 0x00;
+	mask.reg = 0x00;
+	control.reg = 0x00;
+	vram_addr.reg = 0x0000;
+	tram_addr.reg = 0x0000;
 }
 
 olc::Sprite& nesPPU::GetScreen() {
@@ -501,7 +652,7 @@ olc::Sprite& nesPPU::GetPatternTable(uint8_t i, uint8_t palette) {
 				uint8_t tileMSB = ppuRead(i * 0x1000 + offset + row + 8);
 
 				for (uint16_t col = 0; col < 8; col++) {
-					uint8_t pixel = (tileLSB & 0x01) + (tileMSB & 0x01);
+					uint8_t pixel = ((tileLSB & 0x01) << 1) | (tileMSB & 0x01);
 					tileLSB >>= 1;
 					tileMSB >>= 1;
 

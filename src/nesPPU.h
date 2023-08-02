@@ -112,6 +112,23 @@ private:
     uint16_t bg_shifter_attrib_lo = 0x0000;
     uint16_t bg_shifter_attrib_hi = 0x0000;
 
+    struct attributeEntry {
+        uint8_t y;
+        uint8_t id;
+        uint8_t attribute;
+        uint8_t x;
+    } OAM[64];
+
+    uint8_t oamAddress = 0x00;
+
+    attributeEntry spriteScanline[8];
+    uint8_t spriteCount;
+    uint16_t sprite_shifter_pattern_lo[8];
+    uint16_t sprite_shifter_pattern_hi[8];
+
+    bool spriteZeroHit = false;
+    bool spriteZeroRendered = false;
+    
 
 public:
     nesPPU();
@@ -133,4 +150,6 @@ public:
     olc::Pixel& GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
     bool frame_complete = false;
     bool nmi = false;
+    uint8_t* pOAM = (uint8_t*)OAM;
+    
 };

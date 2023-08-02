@@ -29,4 +29,10 @@ public:
 private:
     uint32_t clockCounter = 0;
     uint8_t controller_state[2];
+    uint8_t dmaPage = 0x00;
+    uint8_t dmaAddress = 0x00;
+    uint8_t dmaData = 0x00;
+    bool dmaTransfer = false;
+    bool dmaDummy = true;
+
 };
