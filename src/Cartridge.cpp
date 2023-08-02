@@ -1,4 +1,4 @@
-#include "cartridge.h"
+#include "Cartridge.h"
 
 Cartridge::Cartridge(const std::string& fileName) {
     struct sHeader {

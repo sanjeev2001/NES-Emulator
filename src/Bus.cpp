@@ -1,4 +1,4 @@
-#include "bus.h"
+#include "Bus.h"
 
 Bus::Bus() {
 	cpu.connectBus(this);

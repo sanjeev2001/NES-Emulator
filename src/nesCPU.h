@@ -10,10 +10,6 @@ class nesCPU {
 public:
     nesCPU();
     ~nesCPU();
-
-    std::map<uint16_t, std::string> disassemble(uint16_t nStart,
-        uint16_t nStop);
-
     void connectBus(Bus* n) { bus = n; }
 
     // addressing modes
