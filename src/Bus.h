@@ -3,12 +3,12 @@
 #include <cstdint>
 #include <memory>
 
-#include "cartridge.h"
+#include "Cartridge.h"
 #include "nesCPU.h"
 #include "nesPPU.h"
 
 class Bus {
-public:
+   public:
     Bus();
     ~Bus();
 
@@ -26,7 +26,7 @@ public:
     std::array<uint8_t, 2048> cpuRAM;
     uint8_t controller[2];
 
-private:
+   private:
     uint32_t clockCounter = 0;
     uint8_t controller_state[2];
     uint8_t dmaPage = 0x00;
@@ -34,5 +34,4 @@ private:
     uint8_t dmaData = 0x00;
     bool dmaTransfer = false;
     bool dmaDummy = true;
-
 };

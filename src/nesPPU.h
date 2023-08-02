@@ -1,27 +1,26 @@
 #pragma once
 
+#include <sys/timeb.h>
+#include <time.h>
+
 #include <cstdint>
 #include <memory>
 
-#include "cartridge.h"
+#include "Cartridge.h"
 #include "olcPixelGameEngine.h"
-#include <sys/timeb.h>
-#include <time.h>
 
 class Nes;
 class sdlLib;
 
 class nesPPU {
-private:
-    
-
+   private:
     std::shared_ptr<Cartridge> cartridge;
     /*uint8_t     tblName[2][1024];*/
-    uint8_t     tblPattern[2][4096];
-    uint8_t		tblPalette[32];
+    uint8_t tblPattern[2][4096];
+    uint8_t tblPalette[32];
 
     olc::Pixel palScreen[0x40];
-    
+
     olc::Sprite* sprScreen;
     olc::Sprite* sprNameTable[2];
     olc::Sprite* sprPatternTable[2];
@@ -42,10 +41,8 @@ private:
         uint8_t reg;
     } status;
 
-    union
-    {
-        struct
-        {
+    union {
+        struct {
             uint8_t grayscale : 1;
             uint8_t render_background_left : 1;
             uint8_t render_sprites_left : 1;
@@ -59,29 +56,24 @@ private:
         uint8_t reg;
     } mask;
 
-    union PPUCTRL
-    {
-        struct
-        {
+    union PPUCTRL {
+        struct {
             uint8_t nametable_x : 1;
             uint8_t nametable_y : 1;
             uint8_t increment_mode : 1;
             uint8_t pattern_sprite : 1;
             uint8_t pattern_background : 1;
             uint8_t sprite_size : 1;
-            uint8_t slave_mode : 1; // unused
+            uint8_t slave_mode : 1;  // unused
             uint8_t enable_nmi : 1;
         };
 
         uint8_t reg;
     } control;
 
-    union loopy_register
-    {
+    union loopy_register {
         // Credit to Loopy for working this out :D
-        struct
-        {
-
+        struct {
             uint16_t coarse_x : 5;
             uint16_t coarse_y : 5;
             uint16_t nametable_x : 1;
@@ -93,14 +85,15 @@ private:
         uint16_t reg = 0x0000;
     };
 
-
-    loopy_register vram_addr; // Active "pointer" address into nametable to extract background tile info
-    loopy_register tram_addr; // Temporary store of information to be "transferred" into "pointer" at various times
+    loopy_register vram_addr;  // Active "pointer" address into nametable to
+                               // extract background tile info
+    loopy_register tram_addr;  // Temporary store of information to be
+                               // "transferred" into "pointer" at various times
 
     uint8_t fine_x = 0x00;
     uint8_t addressLatch = 0x00;
     uint8_t ppuDataBuffer = 0x00;
-    //uint16_t ppuAddress = 0x0000;
+    // uint16_t ppuAddress = 0x0000;
 
     // Background rendering
     uint8_t bg_next_tile_id = 0x00;
@@ -128,12 +121,11 @@ private:
 
     bool spriteZeroHit = false;
     bool spriteZeroRendered = false;
-    
 
-public:
+   public:
     nesPPU();
     ~nesPPU();
-   
+
     uint8_t cpuRead(uint16_t addr, bool readOnly = false);
     void cpuWrite(uint16_t addr, uint8_t data);
     uint8_t ppuRead(uint16_t addr, bool readOnly = false);
@@ -142,7 +134,7 @@ public:
     void connectCartridge(const std::shared_ptr<Cartridge>& cart);
     void clock();
     void reset();
-    uint8_t     tblName[2][1024];
+    uint8_t tblName[2][1024];
     olc::Sprite& GetScreen();
     olc::Sprite& GetNameTable(uint8_t i);
     uint8_t getname(uint8_t i, uint8_t j);
@@ -151,5 +143,4 @@ public:
     bool frame_complete = false;
     bool nmi = false;
     uint8_t* pOAM = (uint8_t*)OAM;
-    
 };

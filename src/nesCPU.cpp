@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "bus.h"
+#include "Bus.h"
 
 nesCPU::nesCPU() {
     lookup = {
@@ -278,8 +278,7 @@ uint8_t nesCPU::getFlag(flags f) { return ((status & f) > 0) ? 1 : 0; }
 void nesCPU::setFlag(flags f, bool v) {
     if (v) {
         status |= f;
-    }
-    else {
+    } else {
         status &= ~f;
     }
 }
@@ -453,8 +452,7 @@ uint8_t nesCPU::IND() {
 
     if (ptr_lo == 0x00FF) {
         addr_abs = (read(ptr & 0xFF00) << 8) | read(ptr + 0);
-    }
-    else {
+    } else {
         addr_abs = (read(ptr + 1) << 8) | read(ptr + 0);
     }
 
@@ -626,7 +624,9 @@ uint8_t nesCPU::ADC() {
     uint16_t temp = (uint16_t)a + (uint16_t)fetched + (uint16_t)getFlag(C);
     setFlag(C, temp > 255);
     setFlag(Z, (temp & 0x00FF) == 0);
-    setFlag(V, (~((uint16_t)a ^ (uint16_t)fetched) & ((uint16_t)a ^ (uint16_t)temp)) & 0x0080);
+    setFlag(V, (~((uint16_t)a ^ (uint16_t)fetched) &
+                ((uint16_t)a ^ (uint16_t)temp)) &
+                   0x0080);
     setFlag(N, temp & 0x80);
     a = temp & 0x00FF;
     return 1;
@@ -834,8 +834,7 @@ uint8_t nesCPU::LSR() {
     setFlag(N, temp & 0x0080);
     if (lookup[opcode].addressingMode == &nesCPU::IMP) {
         a = temp & 0x00FF;
-    }
-    else {
+    } else {
         write(addr_abs, temp & 0x00FF);
     }
     return 0;
@@ -843,14 +842,14 @@ uint8_t nesCPU::LSR() {
 
 uint8_t nesCPU::NOP() {
     switch (opcode) {
-    case 0x1C:
-    case 0x3C:
-    case 0x5C:
-    case 0x7C:
-    case 0xDC:
-    case 0xFC:
-        return 1;
-        break;
+        case 0x1C:
+        case 0x3C:
+        case 0x5C:
+        case 0x7C:
+        case 0xDC:
+        case 0xFC:
+            return 1;
+            break;
     }
     return 0;
 }
@@ -900,8 +899,7 @@ uint8_t nesCPU::ROL() {
     setFlag(N, temp & 0x0080);
     if (lookup[opcode].addressingMode == &nesCPU::IMP) {
         a = temp & 0x00FF;
-    }
-    else {
+    } else {
         write(addr_abs, temp & 0x00FF);
     }
     return 0;
@@ -916,8 +914,7 @@ uint8_t nesCPU::ROR() {
     setFlag(N, temp & 0x0080);
     if (lookup[opcode].addressingMode == &nesCPU::IMP) {
         a = temp & 0x00FF;
-    }
-    else {
+    } else {
         write(addr_abs, temp & 0x00FF);
     }
     return 0;
@@ -1018,4 +1015,3 @@ uint8_t nesCPU::TYA() {
 uint8_t nesCPU::XXX() { return 0; }
 
 bool nesCPU::complete() { return cycles == 0; }
-
