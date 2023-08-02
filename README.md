@@ -5,7 +5,7 @@ This is an NES Emulator that can run NROM (Mapper 0) titles such as Super Mario 
 ## Gameplay
 Super Mario Bros                                                                                            |  Donkey Kong
 :----------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------:
-![image](https://i.imgur.com/3AixaGD.png)  |  ![image](https://i.imgur.com/TsNUMVl.png)
+![image](https://i.imgur.com/3AixaGD.png)  |  ![image](https://i.imgur.com/hc81sH2.png)
 
 ## Future Upgrades
 - [ ] Implement Audio
