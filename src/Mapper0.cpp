@@ -1,8 +1,6 @@
 #include "Mapper0.h"
 
-Mapper0::Mapper0(uint8_t prgBanks, uint8_t chrBanks)
-    : Mapper(prgBanks, chrBanks) {}
-
+Mapper0::Mapper0(uint8_t prgBanks, uint8_t chrBanks) : Mapper(prgBanks, chrBanks) {}
 Mapper0::~Mapper0() {}
 
 bool Mapper0::cpuMapRead(uint16_t addr, uint32_t& mapped_addr) {
@@ -30,14 +28,15 @@ bool Mapper0::ppuMapRead(uint16_t addr, uint32_t& mapped_addr) {
 }
 
 bool Mapper0::ppuMapWrite(uint16_t addr, uint32_t& mapped_addr) {
-    if (addr >= 0x0000 && addr <= 0x1FFF)
-    {
-        if (nCHRBanks == 0)
-        {
-            // Treat as RAM
+    if (addr >= 0x0000 && addr <= 0x1FFF) {
+        if (nCHRBanks == 0) {
             mapped_addr = addr;
             return true;
         }
     }
     return false;
+}
+
+void Mapper0::reset() {
+    // No state to reset for Mapper 0
 }
