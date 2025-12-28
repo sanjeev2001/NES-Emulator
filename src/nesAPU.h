@@ -43,6 +43,7 @@ private:
         bool envelope_enabled = false;
         uint8_t volume = 0;
         uint8_t envelope_period = 0;
+        uint8_t envelope_divider_counter = 0;
         uint8_t envelope_decay_count = 0;
         bool envelope_start = false;
         
@@ -89,6 +90,7 @@ private:
         bool envelope_enabled = false;
         uint8_t volume = 0;
         uint8_t envelope_period = 0;
+        uint8_t envelope_divider_counter = 0;
         uint8_t envelope_decay_count = 0;
         bool envelope_start = false;
 

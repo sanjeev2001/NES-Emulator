@@ -61,15 +61,15 @@ void Bus::reset() {
 }
 
 void Bus::SetSampleFrequency(uint32_t sample_rate) {
-    audioTimePerSystemSample = 1.0 / (double)sample_rate;
-    audioTimePerNESClock = 1.0 / 5369318.0; // Approx PPU clock freq
+    dCyclesPerSample = 1789773.0 / (double)sample_rate;
 }
 
 void Bus::clock() {
     ppu.clock();
-    apu.clock();
 
     if (systemClockCounter % 3 == 0) {
+        apu.clock();
+        
         if (dmaTransfer) {
             if (dmaDummy) {
                 if (systemClockCounter % 2 == 1) {
@@ -90,32 +90,20 @@ void Bus::clock() {
         } else {
             cpu.clock();
         }
+        
+        dCycleCounter += 1.0;
+        if (dCycleCounter >= dCyclesPerSample) {
+            dCycleCounter -= dCyclesPerSample;
+            audioSample = apu.GetOutputSample();
+            if (audioSamples.size() < 4096) {
+                audioSamples.push_back((float)audioSample);
+            }
+        }
     }
 
     if (ppu.nmi) {
         ppu.nmi = false;
         cpu.nonMaskedInterruptRequest();
-    }
-    
-    // Audio Synchronization
-    audioTime += audioTimePerNESClock;
-    if (audioTime >= audioTimePerSystemSample) {
-        audioTime -= audioTimePerSystemSample;
-        audioSample = apu.GetOutputSample();
-        
-        // Push sample to thread-safe queue
-        // Limit size to prevent memory explosion if audio is stuck
-        if (audioSamples.size() < 4096) { 
-             // std::unique_lock<std::mutex> lock(muxAudio); // Locking every sample (44100 times/sec) is expensive but safe-ish for now
-             // Optimization: We will lock in batch or main loop, but here is unsafe without lock.
-             // However, locking here inside `clock()` which runs 5MHz is BAD.
-             // BETTER: Don't lock here. Just push. The queue is only accessed by main thread filling it.
-             // Wait, who empties it? The AUDIO THREAD. So we NEED locking.
-             // To avoid locking 5 million times a second (clock is called a lot), we only lock when we PUSH (44k times).
-             // 44k locks/sec is acceptable on modern CPUs.
-             std::lock_guard<std::mutex> lock(muxAudio);
-             audioSamples.push_back((float)audioSample);
-        }
     }
     
     systemClockCounter++;

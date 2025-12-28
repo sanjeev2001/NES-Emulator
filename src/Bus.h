@@ -49,10 +49,8 @@ class Bus {
     
    private:
     // Audio
-    double audioTime = 0.0;
-    double audioGlobalTime = 0.0;
-    double audioTimePerSystemSample = 0.0;
-    double audioTimePerNESClock = 0.0;
+    double dCyclesPerSample = 0.0;
+    double dCycleCounter = 0.0;
     double audioSample = 0.0;
     
     uint8_t controller_state[2];

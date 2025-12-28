@@ -29,8 +29,6 @@ class nesPPU {
     int16_t scanline = 0;
     int16_t cycle = 0;
 
-    struct {};
-
     union {
         struct {
             uint8_t unused : 5;
