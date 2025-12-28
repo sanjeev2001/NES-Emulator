@@ -2,6 +2,17 @@ CXX = g++
 CXXFLAGS = -std=c++17 -O2 -Isrc
 LDFLAGS = -lGL -lglfw -lpthread -ldl
 
+# OS detection
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S), Darwin)
+	# macOS
+	CXXFLAGS += -I/opt/homebrew/include -I/usr/local/include
+	LDFLAGS = -L/opt/homebrew/lib -L/usr/local/lib -lglfw -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+else
+	# Linux/Unix
+	LDFLAGS = -lGL -lglfw -lpthread -ldl
+endif
+
 SRCDIR = src
 OBJDIR = build
 
