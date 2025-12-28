@@ -96,7 +96,20 @@ int main(int argc, char* argv[]) {
     auto tp1 = std::chrono::system_clock::now();
     auto tp2 = std::chrono::system_clock::now();
     
+    double lastTime = glfwGetTime();
+    int nbFrames = 0;
+
     while (!renderer.ShouldClose()) {
+        double currentTime = glfwGetTime();
+        nbFrames++;
+        if ( currentTime - lastTime >= 1.0 ){
+            char title[256];
+            snprintf(title, 256, "NES Emulator - %d FPS", nbFrames);
+            renderer.SetTitle(title);
+            nbFrames = 0;
+            lastTime += 1.0;
+        }
+
         tp2 = std::chrono::system_clock::now();
         std::chrono::duration<float> elapsedTime = tp2 - tp1;
         tp1 = tp2;

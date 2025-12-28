@@ -48,7 +48,10 @@ void Renderer::UpdateTexture(const Sprite& sprite) {
 void Renderer::Draw(const Sprite& sprite) {
     UpdateTexture(sprite);
 
-    glViewport(0, 0, width * scale, height * scale);
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glViewport(0, 0, fbWidth, fbHeight);
+    
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBegin(GL_QUADS);
