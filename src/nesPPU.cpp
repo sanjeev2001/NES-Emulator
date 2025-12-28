@@ -1,79 +1,80 @@
 ﻿#include "nesPPU.h"
+#include <cstring>
 
 nesPPU::nesPPU() {
-	palScreen[0x00] = olc::Pixel(84, 84, 84);
-	palScreen[0x01] = olc::Pixel(0, 30, 116);
-	palScreen[0x02] = olc::Pixel(8, 16, 144);
-	palScreen[0x03] = olc::Pixel(48, 0, 136);
-	palScreen[0x04] = olc::Pixel(68, 0, 100);
-	palScreen[0x05] = olc::Pixel(92, 0, 48);
-	palScreen[0x06] = olc::Pixel(84, 4, 0);
-	palScreen[0x07] = olc::Pixel(60, 24, 0);
-	palScreen[0x08] = olc::Pixel(32, 42, 0);
-	palScreen[0x09] = olc::Pixel(8, 58, 0);
-	palScreen[0x0A] = olc::Pixel(0, 64, 0);
-	palScreen[0x0B] = olc::Pixel(0, 60, 0);
-	palScreen[0x0C] = olc::Pixel(0, 50, 60);
-	palScreen[0x0D] = olc::Pixel(0, 0, 0);
-	palScreen[0x0E] = olc::Pixel(0, 0, 0);
-	palScreen[0x0F] = olc::Pixel(0, 0, 0);
+	palScreen[0x00] = Pixel(84, 84, 84);
+	palScreen[0x01] = Pixel(0, 30, 116);
+	palScreen[0x02] = Pixel(8, 16, 144);
+	palScreen[0x03] = Pixel(48, 0, 136);
+	palScreen[0x04] = Pixel(68, 0, 100);
+	palScreen[0x05] = Pixel(92, 0, 48);
+	palScreen[0x06] = Pixel(84, 4, 0);
+	palScreen[0x07] = Pixel(60, 24, 0);
+	palScreen[0x08] = Pixel(32, 42, 0);
+	palScreen[0x09] = Pixel(8, 58, 0);
+	palScreen[0x0A] = Pixel(0, 64, 0);
+	palScreen[0x0B] = Pixel(0, 60, 0);
+	palScreen[0x0C] = Pixel(0, 50, 60);
+	palScreen[0x0D] = Pixel(0, 0, 0);
+	palScreen[0x0E] = Pixel(0, 0, 0);
+	palScreen[0x0F] = Pixel(0, 0, 0);
 
-	palScreen[0x10] = olc::Pixel(152, 150, 152);
-	palScreen[0x11] = olc::Pixel(8, 76, 196);
-	palScreen[0x12] = olc::Pixel(48, 50, 236);
-	palScreen[0x13] = olc::Pixel(92, 30, 228);
-	palScreen[0x14] = olc::Pixel(136, 20, 176);
-	palScreen[0x15] = olc::Pixel(160, 20, 100);
-	palScreen[0x16] = olc::Pixel(152, 34, 32);
-	palScreen[0x17] = olc::Pixel(120, 60, 0);
-	palScreen[0x18] = olc::Pixel(84, 90, 0);
-	palScreen[0x19] = olc::Pixel(40, 114, 0);
-	palScreen[0x1A] = olc::Pixel(8, 124, 0);
-	palScreen[0x1B] = olc::Pixel(0, 118, 40);
-	palScreen[0x1C] = olc::Pixel(0, 102, 120);
-	palScreen[0x1D] = olc::Pixel(0, 0, 0);
-	palScreen[0x1E] = olc::Pixel(0, 0, 0);
-	palScreen[0x1F] = olc::Pixel(0, 0, 0);
+	palScreen[0x10] = Pixel(152, 150, 152);
+	palScreen[0x11] = Pixel(8, 76, 196);
+	palScreen[0x12] = Pixel(48, 50, 236);
+	palScreen[0x13] = Pixel(92, 30, 228);
+	palScreen[0x14] = Pixel(136, 20, 176);
+	palScreen[0x15] = Pixel(160, 20, 100);
+	palScreen[0x16] = Pixel(152, 34, 32);
+	palScreen[0x17] = Pixel(120, 60, 0);
+	palScreen[0x18] = Pixel(84, 90, 0);
+	palScreen[0x19] = Pixel(40, 114, 0);
+	palScreen[0x1A] = Pixel(8, 124, 0);
+	palScreen[0x1B] = Pixel(0, 118, 40);
+	palScreen[0x1C] = Pixel(0, 102, 120);
+	palScreen[0x1D] = Pixel(0, 0, 0);
+	palScreen[0x1E] = Pixel(0, 0, 0);
+	palScreen[0x1F] = Pixel(0, 0, 0);
 
-	palScreen[0x20] = olc::Pixel(236, 238, 236);
-	palScreen[0x21] = olc::Pixel(76, 154, 236);
-	palScreen[0x22] = olc::Pixel(120, 124, 236);
-	palScreen[0x23] = olc::Pixel(176, 98, 236);
-	palScreen[0x24] = olc::Pixel(228, 84, 236);
-	palScreen[0x25] = olc::Pixel(236, 88, 180);
-	palScreen[0x26] = olc::Pixel(236, 106, 100);
-	palScreen[0x27] = olc::Pixel(212, 136, 32);
-	palScreen[0x28] = olc::Pixel(160, 170, 0);
-	palScreen[0x29] = olc::Pixel(116, 196, 0);
-	palScreen[0x2A] = olc::Pixel(76, 208, 32);
-	palScreen[0x2B] = olc::Pixel(56, 204, 108);
-	palScreen[0x2C] = olc::Pixel(56, 180, 204);
-	palScreen[0x2D] = olc::Pixel(60, 60, 60);
-	palScreen[0x2E] = olc::Pixel(0, 0, 0);
-	palScreen[0x2F] = olc::Pixel(0, 0, 0);
+	palScreen[0x20] = Pixel(236, 238, 236);
+	palScreen[0x21] = Pixel(76, 154, 236);
+	palScreen[0x22] = Pixel(120, 124, 236);
+	palScreen[0x23] = Pixel(176, 98, 236);
+	palScreen[0x24] = Pixel(228, 84, 236);
+	palScreen[0x25] = Pixel(236, 88, 180);
+	palScreen[0x26] = Pixel(236, 106, 100);
+	palScreen[0x27] = Pixel(212, 136, 32);
+	palScreen[0x28] = Pixel(160, 170, 0);
+	palScreen[0x29] = Pixel(116, 196, 0);
+	palScreen[0x2A] = Pixel(76, 208, 32);
+	palScreen[0x2B] = Pixel(56, 204, 108);
+	palScreen[0x2C] = Pixel(56, 180, 204);
+	palScreen[0x2D] = Pixel(60, 60, 60);
+	palScreen[0x2E] = Pixel(0, 0, 0);
+	palScreen[0x2F] = Pixel(0, 0, 0);
 
-	palScreen[0x30] = olc::Pixel(236, 238, 236);
-	palScreen[0x31] = olc::Pixel(168, 204, 236);
-	palScreen[0x32] = olc::Pixel(188, 188, 236);
-	palScreen[0x33] = olc::Pixel(212, 178, 236);
-	palScreen[0x34] = olc::Pixel(236, 174, 236);
-	palScreen[0x35] = olc::Pixel(236, 174, 212);
-	palScreen[0x36] = olc::Pixel(236, 180, 176);
-	palScreen[0x37] = olc::Pixel(228, 196, 144);
-	palScreen[0x38] = olc::Pixel(204, 210, 120);
-	palScreen[0x39] = olc::Pixel(180, 222, 120);
-	palScreen[0x3A] = olc::Pixel(168, 226, 144);
-	palScreen[0x3B] = olc::Pixel(152, 226, 180);
-	palScreen[0x3C] = olc::Pixel(160, 214, 228);
-	palScreen[0x3D] = olc::Pixel(160, 162, 160);
-	palScreen[0x3E] = olc::Pixel(0, 0, 0);
-	palScreen[0x3F] = olc::Pixel(0, 0, 0);
+	palScreen[0x30] = Pixel(236, 238, 236);
+	palScreen[0x31] = Pixel(168, 204, 236);
+	palScreen[0x32] = Pixel(188, 188, 236);
+	palScreen[0x33] = Pixel(212, 178, 236);
+	palScreen[0x34] = Pixel(236, 174, 236);
+	palScreen[0x35] = Pixel(236, 174, 212);
+	palScreen[0x36] = Pixel(236, 180, 176);
+	palScreen[0x37] = Pixel(228, 196, 144);
+	palScreen[0x38] = Pixel(204, 210, 120);
+	palScreen[0x39] = Pixel(180, 222, 120);
+	palScreen[0x3A] = Pixel(168, 226, 144);
+	palScreen[0x3B] = Pixel(152, 226, 180);
+	palScreen[0x3C] = Pixel(160, 214, 228);
+	palScreen[0x3D] = Pixel(160, 162, 160);
+	palScreen[0x3E] = Pixel(0, 0, 0);
+	palScreen[0x3F] = Pixel(0, 0, 0);
 
-	sprScreen = new olc::Sprite(256, 240);
-	sprNameTable[0] = new olc::Sprite(256, 240);
-	sprNameTable[1] = new olc::Sprite(256, 240);
-	sprPatternTable[0] = new olc::Sprite(128, 128);
-	sprPatternTable[1] = new olc::Sprite(128, 128);
+	sprScreen = new Sprite(256, 240);
+	sprNameTable[0] = new Sprite(256, 240);
+	sprNameTable[1] = new Sprite(256, 240);
+	sprPatternTable[0] = new Sprite(128, 128);
+	sprPatternTable[1] = new Sprite(128, 128);
 }
 
 nesPPU::~nesPPU() {
@@ -627,21 +628,21 @@ void nesPPU::reset() {
 	tram_addr.reg = 0x0000;
 }
 
-olc::Sprite& nesPPU::GetScreen() {
+Sprite& nesPPU::GetScreen() {
 	// TODO: insert return statement here
 	return *sprScreen;
 }
 
-olc::Sprite& nesPPU::GetNameTable(uint8_t i) {
+Sprite& nesPPU::GetNameTable(uint8_t i) {
 	// TODO: insert return statement here
 	return *sprNameTable[i];
 }
 
-olc::Pixel& nesPPU::GetColourFromPaletteRam(uint8_t palette, uint8_t pixel) {
+Pixel& nesPPU::GetColourFromPaletteRam(uint8_t palette, uint8_t pixel) {
 	return palScreen[ppuRead(0x3F00 + (palette << 2) + pixel)];
 }
 
-olc::Sprite& nesPPU::GetPatternTable(uint8_t i, uint8_t palette) {
+Sprite& nesPPU::GetPatternTable(uint8_t i, uint8_t palette) {
 	for (uint16_t y = 0; y < 16; y++) {
 		for (uint16_t x = 0; x < 16; x++) {
 			uint16_t offset = y * 256 + x * 16;

@@ -7,7 +7,8 @@
 #include <memory>
 
 #include "Cartridge.h"
-#include "olcPixelGameEngine.h"
+#include "Pixel.h"
+#include "Sprite.h"
 
 class Nes;
 class sdlLib;
@@ -19,11 +20,11 @@ class nesPPU {
     uint8_t tblPattern[2][4096];
     uint8_t tblPalette[32];
 
-    olc::Pixel palScreen[0x40];
+    Pixel palScreen[0x40];
 
-    olc::Sprite* sprScreen;
-    olc::Sprite* sprNameTable[2];
-    olc::Sprite* sprPatternTable[2];
+    Sprite* sprScreen;
+    Sprite* sprNameTable[2];
+    Sprite* sprPatternTable[2];
 
     int16_t scanline = 0;
     int16_t cycle = 0;
@@ -135,11 +136,11 @@ class nesPPU {
     void clock();
     void reset();
     uint8_t tblName[2][1024];
-    olc::Sprite& GetScreen();
-    olc::Sprite& GetNameTable(uint8_t i);
+    Sprite& GetScreen();
+    Sprite& GetNameTable(uint8_t i);
     uint8_t getname(uint8_t i, uint8_t j);
-    olc::Sprite& GetPatternTable(uint8_t i, uint8_t palette);
-    olc::Pixel& GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
+    Sprite& GetPatternTable(uint8_t i, uint8_t palette);
+    Pixel& GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
     bool frame_complete = false;
     bool nmi = false;
     uint8_t* pOAM = (uint8_t*)OAM;
