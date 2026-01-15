@@ -1,6 +1,10 @@
 # NES-Emulator
 
-This is an NES Emulator that can run NROM (Mapper 0) titles such as Super Mario Bros and the original Donkey Kong. Built on the OLC Pixel Game Engine.
+This is an NES Emulator that can run NROM (Mapper 0) titles such as Super Mario Bros and the original Donkey Kong.
+
+## Dependencies
+
+- OpenGL
 
 ## Gameplay
 Super Mario Bros                                                                                            |  Donkey Kong
