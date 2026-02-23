@@ -28,6 +28,7 @@ SRCS = $(SRCDIR)/Emulator.cpp \
        $(SRCDIR)/Cartridge.cpp \
        $(SRCDIR)/Mapper.cpp \
        $(SRCDIR)/Mapper0.cpp \
+       $(SRCDIR)/Mapper1.cpp \
        $(SRCDIR)/nesCPU.cpp \
        $(SRCDIR)/nesPPU.cpp \
        $(SRCDIR)/Renderer.cpp \

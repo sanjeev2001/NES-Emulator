@@ -53,6 +53,9 @@ Cartridge::Cartridge(const std::string& fileName) {
         case 0:
             pMapper = std::make_shared<Mapper0>(prgBanks, chrBanks);
             break;
+        case 1:
+            pMapper = std::make_shared<Mapper1>(prgBanks, chrBanks);
+            break;
         }
 
         bImageValid = true;
@@ -81,7 +84,7 @@ bool Cartridge::cpuRead(uint16_t addr, uint8_t& data) {
 
 bool Cartridge::cpuWrite(uint16_t addr, uint8_t data) {
     uint32_t mapped_addr = 0;
-    if (pMapper->cpuMapWrite(addr, mapped_addr)) {
+    if (pMapper->cpuMapWrite(addr, mapped_addr, data)) {
         if (mapped_addr == 0xFFFFFFFF) {
             return true;
         }
