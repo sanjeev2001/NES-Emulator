@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Mapper0.h"
+#include "Mapper1.h"
 
 class Cartridge {
 private:
